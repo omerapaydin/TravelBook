@@ -1,29 +1,93 @@
-//
-//  ViewController2.swift
-//  TravelBook
-//
-//  Created by Ömer on 3.04.2024.
-//
+
 
 import UIKit
+import CoreData
 
-class ViewController2: UIViewController {
+class ViewController2: UIViewController , UITableViewDelegate , UITableViewDataSource {
 
+    @IBOutlet weak var tableView: UITableView!
+    var titleArray = [String]()
+    var idArray = [UUID]()
+    
+    var chosenTitle = ""
+    var chosenTitleId : UUID?
+    
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        // Do any additional setup after loading the view.
+        tableView.delegate = self
+        tableView.dataSource = self
+        
+        navigationController?.navigationBar.topItem?.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: UIBarButtonItem.SystemItem.add, target: self, action: #selector(addButtonClicked))
+        
+        getData()
     }
     
-
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destination.
-        // Pass the selected object to the new view controller.
+    func getData(){
+        
+        let appDelegate = UIApplication.shared.delegate as! AppDelegate
+        let context = appDelegate.persistentContainer.viewContext
+        
+        let fetch = NSFetchRequest<NSFetchRequestResult>(entityName: "Places")
+        fetch.returnsObjectsAsFaults = false
+        
+        do {
+            
+            let results = try context.fetch(fetch)
+            
+            for result in results as! [NSManagedObject] {
+                
+                if let title = result.value(forKey: "title") as? String {
+                    titleArray.append(title)
+                }
+                
+                if let id = result.value(forKey: "id") as? UUID {
+                    idArray.append(id)
+                }
+                
+            }
+            
+        }catch{
+            print("error")
+        }
+        
+            }
+    
+    
+    @objc func addButtonClicked(){
+        chosenTitle = ""
+        performSegue(withIdentifier: "goTo2", sender: nil)
+        
     }
-    */
+    
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return titleArray.count
+    }
+    
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = UITableViewCell()
+        cell.textLabel?.text = titleArray[indexPath.row]
+        return cell
+        
+    }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == "goTo2" {
+            let desc = segue.destination as! ViewController
+            desc.selectedTitle = chosenTitle
+            desc.selectedTitleId = chosenTitleId
+        }
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        chosenTitle = titleArray[indexPath.row]
+        chosenTitleId = idArray[indexPath.row]
+        performSegue(withIdentifier: "goTo2", sender: nil)
+    }
+
+  
 
 }
